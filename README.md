@@ -1,2 +1,0 @@
-# Noridian_OCR
-gtfttykfjyf
