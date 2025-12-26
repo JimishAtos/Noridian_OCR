@@ -2,8 +2,7 @@ import React, { useRef, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import PDFViewer from './PDFViewer';
 
-// Utility to convert backend fields object to array for table rendering
-// Accepts backend fields object and maps coordinates if present
+// Convert backend fields object → table rows
 function parseExtractedFields(fieldsObj) {
   if (!fieldsObj) return [];
   return Object.entries(fieldsObj).map(([key, val]) => ({
@@ -20,6 +19,39 @@ function parseExtractedFields(fieldsObj) {
     page: val.page ?? null,
   }));
 }
+// Parse Azure D(...) polygons
+export function parseAzureSource(source) {
+  if (!source) return [];
+
+  return source.split(";")
+    .map(segment => {
+      const m = segment.match(
+        /D\((\d+),([\d.]+),([\d.]+),([\d.]+),([\d.]+),([\d.]+),([\d.]+),([\d.]+),([\d.]+)\)/
+      );
+      if (!m) return null;
+
+      const page = Number(m[1]);
+
+      // raw PDF units in inches
+      const x1 = Number(m[2]);
+      const y1 = Number(m[3]);
+      const x3 = Number(m[6]);
+      const y3 = Number(m[7]);
+
+      // CMS-1500 real page size
+      const PAGE_WIDTH_IN = 8.5;
+      const PAGE_HEIGHT_IN = 11.0;
+
+      return {
+        page,
+        x: x1 / PAGE_WIDTH_IN,
+        y: y1 / PAGE_HEIGHT_IN,
+        width: (x3 - x1) / PAGE_WIDTH_IN,
+        height: (y3 - y1) / PAGE_HEIGHT_IN,
+      };
+    })
+    .filter(Boolean);
+}
 
 const CommandCenterTable = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
@@ -29,9 +61,7 @@ const CommandCenterTable = () => {
   const [selectedField, setSelectedField] = useState(null);
   const fileInputRef = useRef();
 
-  const handleUploadClick = () => {
-    fileInputRef.current.click();
-  };
+  const handleUploadClick = () => fileInputRef.current.click();
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -86,7 +116,7 @@ const CommandCenterTable = () => {
         <div className="container-fluid">
           <div className="mb-3">
             <h4 className="fw-bold text-uppercase mb-0">Command Center</h4>
-            <div style={{ minWidth: 250 }}>
+            <div className="command-upload-panel">
               {uploading && (
                 <div className="mb-2">
                   <div className="progress">
@@ -94,40 +124,26 @@ const CommandCenterTable = () => {
                       className="progress-bar progress-bar-striped progress-bar-animated"
                       role="progressbar"
                       style={{ width: `${uploadProgress}%` }}
-                      aria-valuenow={uploadProgress}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
                     />
                   </div>
                 </div>
               )}
-              <button className="btn btn-success px-4 py-2 fw-semibold" onClick={handleUploadClick} disabled={uploading}>
+              <button
+                className="btn btn-success px-4 py-2 fw-semibold"
+                onClick={handleUploadClick}
+                disabled={uploading}
+              >
                 <i className="bi bi-upload me-2"></i>Upload Document
               </button>
               <input
                 type="file"
                 accept="application/pdf"
                 ref={fileInputRef}
-                style={{ display: 'none' }}
+                className="hidden-input"
                 onChange={handleFileChange}
               />
             </div>
           </div>
-
-          {uploading && (
-            <div className="mb-3">
-              <div className="progress p-5">
-                <div
-                  className="progress-bar progress-bar-striped progress-bar-animated"
-                  role="progressbar"
-                  style={{ width: `${uploadProgress}%` }}
-                  aria-valuenow={uploadProgress}
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                ></div>
-              </div>
-            </div>
-          )}
 
           <div className="row g-4 align-items-start">
             <div className="col-md-5">
@@ -147,19 +163,49 @@ const CommandCenterTable = () => {
                   </thead>
                   <tbody>
                     {extractedFields.length === 0 ? (
-                      <tr><td colSpan={5} className="text-center text-muted">No fields extracted</td></tr>
+                      <tr>
+                        <td colSpan={5} className="text-center text-muted">
+                          No fields extracted
+                        </td>
+                      </tr>
                     ) : (
-                      extractedFields.map((field, idx) => (
-                        <tr key={idx} onClick={() => setSelectedField(field)} style={{ cursor: 'pointer', background: selectedField === field ? '#e6f7ff' : undefined }}>
+                    extractedFields.map((field, idx) => (
+                      <tr
+                        key={idx}
+                        ref={(el) => (rowRefs.current[idx] = el)}
+                        className={`table-row-clickable ${activeIndex === idx ? 'table-active' : ''}`}
+                        onClick={() => {
+                          setActiveIndex(idx);
+
+                          const boxes = parseAzureSource(field.source);
+                          setHighlightBoxes(boxes);
+
+                          // scroll table row into view
+                          rowRefs.current[idx]?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                          });
+
+                          // notify PDF viewer to scroll
+                          const first = boxes?.[0];
+                          if (first) {
+                            window.dispatchEvent(
+                              new CustomEvent('scrollToPdfPage', {
+                                detail: { page: first.page },
+                              })
+                            );
+                          }
+                        }}
+                      >
                           <td>{field.label}</td>
                           <td>{field.value}</td>
                           {/* <td>{field.source}</td> */}
                           {/* <td>{field.confidence != null ? field.confidence : ''}</td> */}
                           {/* <td className="text-center">
-                                    <button className="btn btn-sm btn-outline-primary me-1" title="Edit"><i className="bi bi-pen"></i></button>
-                                    <button className="btn btn-sm btn-outline-success me-1" title="Thumbs Up"><i className="bi bi-hand-thumbs-up"></i></button>
-                                    <button className="btn btn-sm btn-outline-danger" title="Thumbs Down"></i></button>
-                                  </td> */}
+                                <button className="btn btn-sm btn-outline-primary me-1" title="Edit"><i className="bi bi-pen"></i></button>
+                                <button className="btn btn-sm btn-outline-success me-1" title="Thumbs Up"><i className="bi bi-hand-thumbs-up"></i></button>
+                                <button className="btn btn-sm btn-outline-danger" title="Thumbs Down"></i></button>
+                              </td> */}
                           <td className="text-center">
                             <select className="form-select" aria-label="Default select" defaultValue="1">
                               <option value="1">Edit</option>
@@ -168,7 +214,7 @@ const CommandCenterTable = () => {
                             </select>
                           </td>
                         </tr>
-                      ))
+                    ))
                     )}
                   </tbody>
                 </table>

@@ -3,65 +3,106 @@ import { Worker, Viewer } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
 // selectedField: { page, x, y, width, height } (all in percent or absolute units relative to PDF page)
-const PDFViewer = ({ fileUrl, selectedField }) => {
-  // Overlay plugin using the slot API
-  const renderPageLayer = (props) => {
-    // Only render overlay on the correct page
-    if (
-      !selectedField ||
-      selectedField.page == null ||
-      selectedField.page !== props.pageIndex + 1 ||
-      selectedField.x == null ||
-      selectedField.y == null ||
-      selectedField.width == null ||
-      selectedField.height == null
-    ) {
-      return null;
-    }
-    // Get rendered page size
-    const { width: pageWidth, height: pageHeight } = props.canvasLayerRenderedSize || {};
-    // Helper to parse percent or pixel value
-    const parseCoord = (val, total) => {
-      if (typeof val === 'string' && val.trim().endsWith('%')) {
-        return (parseFloat(val) / 100) * total;
-      }
-      return Number(val);
+const PDFViewer = ({ fileUrl, highlightBoxes }) => {
+  const containerRef = React.useRef(null);
+  const [overlays, setOverlays] = React.useState([]);
+
+  // Scroll to PDF page when table clicks
+  React.useEffect(() => {
+    const handler = (e) => {
+      const { page } = e.detail;
+
+      const pages = containerRef.current?.querySelectorAll(
+        '.rpv-core__page-layer'
+      );
+
+      if (!pages || !pages[page - 1]) return;
+
+      pages[page - 1].scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
     };
-    const left = pageWidth ? parseCoord(selectedField.x, pageWidth) : selectedField.x;
-    const top = pageHeight ? parseCoord(selectedField.y, pageHeight) : selectedField.y;
-    const width = pageWidth ? parseCoord(selectedField.width, pageWidth) : selectedField.width;
-    const height = pageHeight ? parseCoord(selectedField.height, pageHeight) : selectedField.height;
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          left,
-          top,
-          width,
-          height,
-          border: '2px solid green',
-          boxSizing: 'border-box',
-          pointerEvents: 'none',
-          zIndex: 10,
-        }}
-      />
-    );
-  };
+
+    window.addEventListener('scrollToPdfPage', handler);
+    return () => window.removeEventListener('scrollToPdfPage', handler);
+  }, []);
+
+  // Build overlays whenever highlights change
+  React.useEffect(() => {
+    if (!containerRef.current || !highlightBoxes || highlightBoxes.length === 0) {
+      setOverlays([]);
+      return;
+    }
+
+    const pages = containerRef.current.querySelectorAll('.rpv-core__page-layer');
+    if (!pages || pages.length === 0) return;
+
+    const next = [];
+
+    highlightBoxes.forEach((box, i) => {
+      const pageEl = pages[box.page - 1];
+      if (!pageEl) return;
+
+      const rect = pageEl.getBoundingClientRect();
+
+      // --- CMS-1500 margin tuning ---
+      const marginX = rect.width * 0.025;
+      const marginY = rect.height * 0.015;
+
+      const contentWidth = rect.width - marginX * 2;
+      const contentHeight = rect.height - marginY * 2;
+      const fineTuneY = rect.height * 0.01;
+
+      next.push({
+        id: i,
+        pageEl,
+        style: {
+          left: `${marginX + box.x * contentWidth}px`,
+          top: `${marginY + box.y * contentHeight - fineTuneY}px`,
+          width: `${box.width * contentWidth}px`,
+          height: `${box.height * contentHeight}px`,
+        },
+      });
+    });
+
+    setOverlays(next);
+  }, [highlightBoxes]);
 
   return (
-    <div className="isPdfViewer" style={{ position: 'relative' }}>
-      <Worker workerUrl={`https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`}>
+    <div
+      ref={containerRef}
+      style={{
+        width: '100%',
+        height: '75vh',
+        overflow: 'auto',
+        position: 'relative',
+      }}
+    >
+      <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js">
         {fileUrl ? (
-          <Viewer
-            fileUrl={fileUrl}
-            renderPageLayer={renderPageLayer}
-          />
+          <Viewer fileUrl={fileUrl} />
         ) : (
-          <div className="text-center text-muted pt-5">No PDF loaded</div>
+          <div className="text-center text-muted pt-5">
+            No PDF loaded
+          </div>
         )}
       </Worker>
+
+      {/* Render overlays inside each PDF page using portals */}
+      {overlays.map((o) =>
+        o.pageEl
+          ? createPortal(
+            <div
+              key={o.id}
+              className="highlight-box"
+              style={o.style}
+            />,
+            o.pageEl
+          )
+          : null
+      )}
     </div>
   );
 };
-
 export default PDFViewer;
