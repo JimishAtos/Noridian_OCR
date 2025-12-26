@@ -1,8 +1,8 @@
 import React from 'react';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
+import { createPortal } from 'react-dom';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
-// selectedField: { page, x, y, width, height } (all in percent or absolute units relative to PDF page)
 const PDFViewer = ({ fileUrl, highlightBoxes }) => {
   const containerRef = React.useRef(null);
   const [overlays, setOverlays] = React.useState([]);
@@ -105,4 +105,5 @@ const PDFViewer = ({ fileUrl, highlightBoxes }) => {
     </div>
   );
 };
+
 export default PDFViewer;
