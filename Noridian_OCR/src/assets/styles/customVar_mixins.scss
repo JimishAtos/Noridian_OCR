@@ -1,0 +1,8 @@
+$isColor: #fff;
+
+@mixin isBodyProps($isBg, $isColor, $isMargin, $isPadding){
+    background: $isBg;
+    color: $isColor;
+    margin: $isMargin;
+    padding: $isPadding;
+}

@@ -1,0 +1,11 @@
+@use './customVar_mixins.scss' as *;
+
+body{
+    @include isBodyProps(#fff, #000, 0, 0);
+}
+.isPdfViewer{
+    border: 1px solid #222;
+    box-shadow: 0 0 10px #c4c4c4;
+    min-height: 750px;
+    border-radius: 8px;
+}

@@ -73,17 +73,17 @@ const CommandCenterTable = () => {
   };
 
   return (
-    <div className="container-fluid px-0">
+    <div className="col-9 col-xl-9 col-xxl-9 p-4 float-start">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h4 className="fw-bold text-uppercase mb-0" style={{letterSpacing: '1px'}}>Command Center</h4>
-        <div style={{minWidth: 250}}>
+        <h4 className="fw-bold text-uppercase mb-0">Command Center</h4>
+        <div style={{ minWidth: 250 }}>
           {uploading && (
             <div className="mb-2">
-              <div className="progress" style={{height: '8px'}}>
+              <div className="progress">
                 <div
                   className="progress-bar progress-bar-striped progress-bar-animated"
                   role="progressbar"
-                  style={{width: `${uploadProgress}%`}}
+                  style={{ width: `${uploadProgress}%` }}
                   aria-valuenow={uploadProgress}
                   aria-valuemin={0}
                   aria-valuemax={100}
@@ -105,7 +105,7 @@ const CommandCenterTable = () => {
       </div>
       {uploading && (
         <div className="mb-3">
-          <div className="progress" style={{ height: '5px' }}>
+          <div className="progress p-5">
             <div
               className="progress-bar progress-bar-striped progress-bar-animated"
               role="progressbar"
@@ -123,38 +123,43 @@ const CommandCenterTable = () => {
         </div>
         <div className="col-md-7">
           <div className="card shadow-sm">
-            <div className="card-body p-2">
-              <table className="table table-bordered align-middle mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Field Label</th>
-                    <th>Extracted Value</th>
-                    <th>Source</th>
-                    <th>Confidence</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {extractedFields.length === 0 ? (
-                    <tr><td colSpan={5} className="text-center text-muted">No fields extracted</td></tr>
-                  ) : (
-                    extractedFields.map((field, idx) => (
-                      <tr key={idx}>
-                        <td>{field.label}</td>
-                        <td>{field.value}</td>
-                        <td>{field.source}</td>
-                        <td>{field.confidence != null ? field.confidence : ''}</td>
-                        <td className="text-center">
+            <table className="table table-bordered align-middle mb-0">
+              <thead className="table-light">
+                <tr>
+                  <th>Field Label</th>
+                  <th>Extracted Value</th>
+                  {/* <th>Source</th> */}
+                  {/* <th>Confidence</th> */}
+                  <th className="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {extractedFields.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center text-muted">No fields extracted</td></tr>
+                ) : (
+                  extractedFields.map((field, idx) => (
+                    <tr key={idx}>
+                      <td>{field.label}</td>
+                      <td>{field.value}</td>
+                      {/* <td>{field.source}</td> */}
+                      {/* <td>{field.confidence != null ? field.confidence : ''}</td> */}
+                      {/* <td className="text-center">
                           <button className="btn btn-sm btn-outline-primary me-1" title="Edit"><i className="bi bi-pen"></i></button>
                           <button className="btn btn-sm btn-outline-success me-1" title="Thumbs Up"><i className="bi bi-hand-thumbs-up"></i></button>
                           <button className="btn btn-sm btn-outline-danger" title="Thumbs Down"><i className="bi bi-hand-thumbs-down"></i></button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        </td> */}
+                      <td className="text-center">
+                        <select className="form-select" aria-label="Default select">
+                          <option value="1" selected>Edit</option>
+                          <option value="2">Approve</option>
+                          <option value="3">Reject</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
