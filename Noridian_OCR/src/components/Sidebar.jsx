@@ -1,35 +1,67 @@
-import React from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-
-
-const Sidebar = () => (
-  <>
-    <div className="col-3 float-start bg-light" >
-      <h5 className="fw-bold text-uppercase text-secondary">Overview</h5>
-      <ul className="nav nav-pills flex-column mb-auto">
-        <li className="nav-item">
-          <a href="#" className="nav-link active" aria-current="page">
-            <i className="bi bi-grid-3x3-gap"></i> Command Center
-          </a>
-        </li>
-        {/* <li>
-          <a href="#" className="nav-link text-dark">
-            <i className="bi bi-box-arrow-in-down"></i> Ingestion Hub
-          </a>
-        </li>
-        <li>
-          <a href="#" className="nav-link text-dark">
-            <i className="bi bi-translate"></i> Translate
-          </a>
-        </li>
-        <li>
-          <a href="#" className="nav-link text-dark">
-            <i className="bi bi-clock-history"></i> Reports
-          </a>
-        </li> */}
-      </ul>
-    </div>
-  </>
-);
+const Sidebar = ({ collapsed }) => {
+  return (
+    
+    <aside id="sidebar" className={collapsed ? "collapsed" : ""}>
+      <div className="h-100">
+        <ul className="sidebar-nav">
+          <li className="sidebar-item">
+            <a href="#" className="sidebar-link">
+              <i className="fa-solid fa-list pe-2"></i>
+              Profile
+            </a>
+          </li>
+          <li className="sidebar-item">
+            <a href="#" className="sidebar-link collapsed" data-bs-toggle="collapse" data-bs-target="#pages"
+              aria-expanded="false" aria-controls="pages">
+              <i className="fa-regular fa-file-lines pe-2"></i>
+              Pages
+            </a>
+            <ul id="pages" className="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Analytics</a>
+              </li>
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Ecommerce</a>
+              </li>
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Crypto</a>
+              </li>
+            </ul>
+          </li>
+          <li className="sidebar-item">
+            <a href="#" className="sidebar-link collapsed" data-bs-toggle="collapse" data-bs-target="#dashboard"
+              aria-expanded="false" aria-controls="dashboard">
+              <i className="fa-solid fa-sliders pe-2"></i>
+              Dashboard
+            </a>
+            <ul id="dashboard" className="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Dashboard Analytics</a>
+              </li>
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Dashboard Ecommerce</a>
+              </li>
+            </ul>
+          </li>
+          <li className="sidebar-item">
+            <a href="#" className="sidebar-link collapsed" data-bs-toggle="collapse" data-bs-target="#auth"
+              aria-expanded="false" aria-controls="auth">
+              <i className="fa-regular fa-user pe-2"></i>
+              Auth
+            </a>
+            <ul id="auth" className="sidebar-dropdown list-unstyled collapse" data-bs-parent="#sidebar">
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Login</a>
+              </li>
+              <li className="sidebar-item">
+                <a href="#" className="sidebar-link">Register</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </aside>
+  );
+};
 
 export default Sidebar;

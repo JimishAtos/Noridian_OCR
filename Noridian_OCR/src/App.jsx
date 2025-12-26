@@ -1,22 +1,21 @@
 import { useState } from 'react';
+import HeaderPage from './components/HeaderPage';
 import Sidebar from './components/Sidebar';
 import CommandCenterTable from './components/CommandCenterTable';
-import HeaderPage from './components/HeaderPage';
-
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <>
-      <div className="container-fluid my-5 clearfix">
-        <HeaderPage />
-        <Sidebar />
+      <HeaderPage onToggleSidebar={
+        () => setSidebarCollapsed((prev) => !prev)} />
+      <div className="wrapper">
+        <Sidebar collapsed={sidebarCollapsed} />
         <CommandCenterTable />
       </div>
-      {/* END container-fluid */}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
